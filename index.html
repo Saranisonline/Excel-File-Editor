@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel File Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            animation: slideIn 1s ease-in-out;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            animation: fadeInTable 1s ease-in-out;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        td input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            animation: slideIn 1s ease-in-out;
+        }
+
+        .btn-group .btn {
+            margin-right: 10px;
+            width: 24%;
+        }
+
+        @media (max-width: 768px) {
+            .btn-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInTable {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Excel File Editor</h1>
+        <div class="btn-group">
+            <input type="file" id="fileUpload" accept=".xlsx, .xls" class="btn">
+            <button id="addRowBtn" class="btn">Add Row</button>
+            <button id="addColumnBtn" class="btn">Add Column</button>
+            <button id="deleteSelectedBtn" class="btn btn-danger">Delete Selected Rows</button>
+            <button id="downloadExcelBtn" class="btn">Download Excel</button>
+        </div>
+        <table id="dataTable">
+            <thead>
+                <tr id="headerRow">
+                    <th>Select</th>
+                    <th contenteditable="true">Column 1</th>
+                    <th contenteditable="true">Column 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" class="row-selector"></td>
+                    <td><input type="text" placeholder="Enter data"></td>
+                    <td><input type="text" placeholder="Enter data"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // Add Row
+        document.getElementById("addRowBtn").addEventListener("click", () => {
+            const tableBody = document.querySelector("#dataTable tbody");
+            const row = document.createElement("tr");
+
+            // Add checkbox for selecting rows
+            const checkboxCell = document.createElement("td");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "row-selector";
+            checkboxCell.appendChild(checkbox);
+            row.appendChild(checkboxCell);
+
+            // Create cells for the row
+            const columnCount = document.querySelector("#headerRow").children.length - 1; // Exclude the "Select" column
+            for (let i = 0; i < columnCount; i++) {
+                const td = document.createElement("td");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "Enter data";
+                td.appendChild(input);
+                row.appendChild(td);
+            }
+
+            tableBody.appendChild(row);
+        });
+
+        // Add Column
+        document.getElementById("addColumnBtn").addEventListener("click", () => {
+            const headerRow = document.querySelector("#headerRow");
+
+            // Add column to header
+            const columnCount = headerRow.children.length;
+            const newHeader = document.createElement("th");
+            newHeader.contentEditable = true;
+            newHeader.innerText = `Column ${columnCount}`;
+            headerRow.appendChild(newHeader);
+
+            // Add column to all rows
+            document.querySelectorAll("#dataTable tbody tr").forEach(row => {
+                const newCell = document.createElement("td");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "Enter data";
+                newCell.appendChild(input);
+                row.appendChild(newCell);
+            });
+        });
+
+        // Delete Selected Rows
+        document.getElementById("deleteSelectedBtn").addEventListener("click", () => {
+            const rows = document.querySelectorAll("#dataTable tbody tr");
+            rows.forEach(row => {
+                const isSelected = row.querySelector(".row-selector").checked;
+                if (isSelected) {
+                    row.remove();
+                }
+            });
+        });
+
+        // File Upload
+        document.getElementById("fileUpload").addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = e.target.result;
+                const workbook = XLSX.read(data, { type: "binary" });
+                const sheetName = workbook.SheetNames[0];
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+                populateTable(jsonData);
+            };
+            reader.readAsBinaryString(file);
+        });
+
+        // Populate Table from Uploaded Excel
+        function populateTable(data) {
+            const headerRow = document.querySelector("#headerRow");
+            const tableBody = document.querySelector("#dataTable tbody");
+
+            headerRow.innerHTML = "<th>Select</th>";
+            tableBody.innerHTML = "";
+
+            // Populate header
+            data[0].forEach(header => {
+                const th = document.createElement("th");
+                th.contentEditable = true;
+                th.innerText = header;
+                headerRow.appendChild(th);
+            });
+
+            // Populate body
+            for (let i = 1; i < data.length; i++) {
+                const row = document.createElement("tr");
+
+                const checkboxCell = document.createElement("td");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.className = "row-selector";
+                checkboxCell.appendChild(checkbox);
+                row.appendChild(checkboxCell);
+
+                data[i].forEach(cellData => {
+                    const td = document.createElement("td");
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.value = cellData || "";
+                    td.appendChild(input);
+                    row.appendChild(td);
+                });
+
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Download Excel
+        document.getElementById("downloadExcelBtn").addEventListener("click", () => {
+            const table = document.getElementById("dataTable");
+            const workbook = XLSX.utils.book_new();
+            const data = [];
+
+            // Extract table data
+            const headerRow = Array.from(table.querySelector("#headerRow").children).map(th => th.innerText);
+            data.push(headerRow.slice(1)); // Exclude "Select" column
+
+            table.querySelectorAll("tbody tr").forEach(row => {
+                const rowData = Array.from(row.children)
+                    .slice(1) // Exclude "Select" column
+                    .map(td => td.querySelector("input")?.value || "");
+                data.push(rowData);
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, "EditedFile.xlsx");
+        });
+    </script>
+</body>
+</html>
